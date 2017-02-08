@@ -1,0 +1,2 @@
+example 2017/02/04 16:49:21 logToFile.go:13: This is a regular message.
+example 2017/02/04 16:49:21 logToFile.go:14: This is a fatal error.
