@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <title>Chat</title>
+    <link href="//cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+	  <div class="container">
+		  <div class="col-md-4"></div>
+		  <div class="col-md-4">
+			  <h1>Polls</h1>
+			  <ul id="polls"></ul>
+			  <a href="new.html" class="btn btn-primary">Create new poll</a>
+		  </div>
+		  <div class="col-md-4"></div>
+	  </div>
+  </body>
+  <script src="//cdn.bootcss.com/jquery/3.1.1/jquery.min.js"></script>  
+  <script>
+    $(function() {
+	    var update = function() {
+		    $.get("http://localhost:8080/polls/?key=abc123", null, null, "json")
+			    .done(function(polls) {
+				    $("#polls").empty();
+				    for (var p in polls) {
+					    $("#polls").append(
+							    $("<li>").append(
+								    $("<a>")
+								      .attr("href", "view.html?poll=polls/" + poll.id)
+								      .text(poll.title)
+								      )
+							    )
+				    }
+			    }
+			    );
+		            window.setTimeout(update, 10000);
+	    }
+	    update();
+    });
+  </script>
+<html>
