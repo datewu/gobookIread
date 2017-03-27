@@ -1,0 +1,11 @@
+<h1> Todos</h1>
+<ul>
+	{{ range . }}
+	  <li>
+		  {{ if .Done }}
+		  <s>{{ .Task }} </s>
+		  {{ else }}
+		    {{ .Task }}
+		  {{ end }}
+	{{ end }}
+</ul>
