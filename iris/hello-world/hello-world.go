@@ -15,7 +15,7 @@ func main() {
 	app.Adapt(httprouter.New())
 
 	app.HandleFunc("GET", "/", func(ctx *iris.Context) {
-		ctx.Writef("hello world\n dd")
+		ctx.Write([]byte("hello world\n dd"))
 	})
 	fmt.Println("vim-go")
 	app.Listen(":8080")

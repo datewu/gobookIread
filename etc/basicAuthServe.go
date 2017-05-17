@@ -10,6 +10,7 @@ func main() {
 	http.HandleFunc("/", basicAuth(hello, "c", "d", "password due"))
 	http.ListenAndServe(":9999", nil)
 }
+
 func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<div id="lol">"due, what's up?"</div>`)
 }
