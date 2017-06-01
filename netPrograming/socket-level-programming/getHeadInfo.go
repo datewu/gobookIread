@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 )
@@ -15,6 +16,12 @@ func main() {
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", service)
 	chekError(err)
+	log.Println(tcpAddr)
+	log.Println(tcpAddr.IP)
+
+	lo := net.ParseIP("127.0.0.1")
+	tcpAddr.IP = lo
+	log.Println(tcpAddr)
 
 	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	chekError(err)
