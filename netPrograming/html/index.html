@@ -1,0 +1,30 @@
+<html><body><pre><code>package main
+
+import (
+	&#34;fmt&#34;
+	&#34;html&#34;
+	&#34;io/ioutil&#34;
+	&#34;log&#34;
+	&#34;net/http&#34;
+)
+
+func main() {
+	http.HandleFunc(&#34;/&#34;, escapeString)
+
+	log.Fatalln(http.ListenAndServe(&#34;:8080&#34;, nil))
+}
+
+func escapeString(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.URL.Path)
+	bytes, err := ioutil.ReadFile(&#34;.&#34; + r.URL.Path)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	escapedStr := html.EscapeString(string(bytes))
+	htmlText := &#34;&lt;html&gt;&lt;body&gt;&lt;pre&gt;&lt;code&gt;&#34; +
+		escapedStr +
+		&#34;&lt;/code&gt;&lt;/pre&gt;&lt;/body&gt;&lt;/html&gt;&#34;
+	w.Write([]byte(htmlText))
+}
+</code></pre></body></html>
