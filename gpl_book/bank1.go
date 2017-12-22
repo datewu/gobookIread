@@ -5,58 +5,60 @@ import (
 	"log"
 )
 
-var deposits = make(chan int) // send amount to deposit
-var balances = make(chan int) // receive balance
-var withdrwas = make(chan ws) // send amount to deposit
+var (
+	depositStream  = make(chan int)
+	withdrawStream = make(chan ws)
+	balanceStream  = make(chan int)
+)
 
 type ws struct {
 	amount   int
 	callback chan bool
 }
 
-func Deposit(amount int) {
-	deposits <- amount
+func deposit(amount int) {
+	depositStream <- amount
 }
 
-func Balance() int {
-	return <-balances
+func balance() int {
+	return <-balanceStream
 }
 
-func Withdraw(amount int) (r bool) {
+func withdraw(amount int) (b bool) {
 	w := ws{amount, make(chan bool)}
-	withdrwas <- w
-	r = <-w.callback
-	log.Println(r)
+	withdrawStream <- w
+	b = <-w.callback
+	log.Println(b)
 	return
 }
 
 func teller() {
-	var balance int // balance is confined to teller goroutine
+	var balance int // balance is confied to teller goroutine
 	for {
 		select {
-		case amount := <-deposits:
+		case amount := <-depositStream:
 			balance += amount
-		case balances <- balance:
-			log.Println("sb is checking his balance")
-		case w := <-withdrwas:
+		case balanceStream <- balance:
+			//log.Println("he is cheking his balance")
+		case w := <-withdrawStream:
 			if w.amount <= balance {
 				balance -= w.amount
 				w.callback <- true
-				continue
+			} else {
+				w.callback <- false
 			}
-			w.callback <- false
 		}
 	}
 }
 
-func init() {
+func main() {
 	go teller()
 
-}
-func main() {
-	fmt.Println(Balance())
-	Deposit(100)
-	fmt.Println(Balance())
-	Withdraw(20)
-	fmt.Println(Balance())
+	fmt.Println(balance())
+	deposit(100)
+	fmt.Println("After deposit 100:", balance())
+	withdraw(200)
+	fmt.Println("After withdraw 200:", balance())
+	withdraw(20)
+	fmt.Println("After withdraw 20:", balance())
 }

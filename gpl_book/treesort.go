@@ -1,30 +1,31 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+)
 
 type tree struct {
 	value       int
 	left, right *tree
 }
 
-// Sort sorts values in place.
-func Sort(values []int) {
+func sort(values []int) {
 	var root *tree
+	//root := new(tree)
 	for _, v := range values {
 		root = add(root, v)
 	}
-	appendValues(values[:0], root)
+	// fmt.Println(appendValues(values[:0], root))
 }
 
-// appendValues appends the elements of t to values in order
-// and return the resulting slice.
-func appendValues(values []int, t *tree) {
+func appendValues(vs []int, t *tree) (res []int) {
 	if t != nil {
-		values = appendValues(values, t.left)
-		values = append(values, t.value)
-		values = appendValues(values, t.right)
+		vs = appendValues(vs, t.left)
+		vs = append(vs, t.value)
+		vs = appendValues(vs, t.right)
 	}
-	return values
+	return vs
 }
 
 func add(t *tree, value int) *tree {
@@ -39,8 +40,12 @@ func add(t *tree, value int) *tree {
 		t.right = add(t.right, value)
 	}
 	return t
-
 }
+
 func main() {
-	fmt.Println("vim-go")
+	randValues := rand.Perm(8)
+	fmt.Println("Original", randValues)
+
+	sort(randValues)
+	fmt.Println("Sorted", randValues)
 }

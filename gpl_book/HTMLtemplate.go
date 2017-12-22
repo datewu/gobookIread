@@ -1,4 +1,3 @@
-// github provides a Go API for the GitHub issue tracker.
 package main
 
 import (
@@ -13,8 +12,7 @@ import (
 	"time"
 )
 
-// IssuesURL lol
-const IssuesURL = "https://api.github.com/search/issues"
+const issuesURL = "https://api.github.com/search/issues"
 
 var issueList = template.Must(template.New("issuelist").Parse(`
 <h1>{{.TotalCount}} issues</h1>
@@ -36,58 +34,51 @@ var issueList = template.Must(template.New("issuelist").Parse(`
 </table>
 `))
 
-// IssuesSearchResult lol
-type IssuesSearchResult struct {
+type issuesSearchResult struct {
 	TotalCount int `json:"total_count"`
-	Items      []*Issue
+	Items      []*issue
 }
 
-// Issue lol
-type Issue struct {
-	Number    int
-	HTMLURL   string `json:"html_url"`
-	Title     string
-	State     string
-	User      *User
-	CreatedAt time.Time `json:"created_at"`
-	Body      string    // in Markdown format
+type issue struct {
+	Number   int
+	HTMLURL  string `json:"html_url"`
+	Title    string
+	State    string
+	User     *user
+	CreateAt time.Time `json:"create_at"`
 }
 
-// User lol
-type User struct {
+type user struct {
 	Login   string
 	HTMLURL string `json:"html_url"`
 }
 
-// SearchIssues queries the GitHub issue tracker.
-func SearchIssues(terms []string) (*IssuesSearchResult, error) {
-	q := url.QueryEscape(strings.Join(terms, " "))
-	resp, err := http.Get(IssuesURL + "?q=" + q)
+func searchIssues(terms []string) (*issuesSearchResult, error) {
+	qraw := strings.Join(terms, " ")
+	q := url.QueryEscape(qraw)
+	resp, err := http.Get(issuesURL + "?q=" + q)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
-
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("search query failed: %s", resp.Status)
+		return nil, fmt.Errorf("search query: %s failed: %s", qraw, resp.Status)
 	}
-	var result IssuesSearchResult
-	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Println(err)
+	var result issuesSearchResult
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
 func main() {
-	result, err := SearchIssues(os.Args[1:])
+	r, err := searchIssues(os.Args[1:])
 	if err != nil {
-		log.Println(err)
-		return
-	}
-	if err = issueList.Execute(os.Stdout, result); err != nil {
 		log.Fatalln(err)
 	}
-
+	if err := issueList.Execute(os.Stdout, r); err != nil {
+		log.Fatalln(err)
+	}
 }
+
+// go run HTMLtemplate.go react redux angular js  > test.html

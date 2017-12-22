@@ -13,6 +13,7 @@ func main() {
 		s := path.Base(r.URL.Path)
 		log.Println(strings.ToLower(s))
 		fmt.Fprintf(w, "%s\n", s)
+
 	})
 	http.ListenAndServe(":8080", nil)
 }

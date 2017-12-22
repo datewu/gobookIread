@@ -9,10 +9,14 @@ import (
 	"golang.org/x/net/html"
 )
 
+func main() {
+	breadthFirst(crawl, os.Args[1:])
+}
+
 // breadthFirst calls f for each item in the worklist.
 // Any items returned by f are added to the worklist.
 // f is called at most once for each item.
-func breadthFirst(f func(item string) []string, worklist []string) {
+func breadthFirst(f func(string) []string, worklist []string) {
 	seen := make(map[string]bool)
 	for len(worklist) > 0 {
 		items := worklist
@@ -28,22 +32,17 @@ func breadthFirst(f func(item string) []string, worklist []string) {
 
 func crawl(url string) []string {
 	fmt.Println(url)
-	list, err := Extract(url)
+	list, err := extract(url)
 	if err != nil {
 		log.Println(err)
+		return nil
 	}
 	return list
-
 }
 
-func main() {
-	breadthFirst(crawl, os.Args[1:])
-}
-
-func Extract(url string) ([]string, error) {
+func extract(url string) ([]string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -52,7 +51,6 @@ func Extract(url string) ([]string, error) {
 	}
 	doc, err := html.Parse(resp.Body)
 	if err != nil {
-		log.Println(err)
 		return nil, fmt.Errorf("parsing %s as HTML: %v", url, err)
 	}
 
@@ -71,11 +69,13 @@ func Extract(url string) ([]string, error) {
 			}
 		}
 	}
+
 	forEachNode(doc, visitNode, nil)
 	return links, nil
+
 }
 
-func forEachNode(n *html.Node, pre, post func(n *html.Node)) {
+func forEachNode(n *html.Node, pre, post func(*html.Node)) {
 	if pre != nil {
 		pre(n)
 	}
@@ -84,5 +84,6 @@ func forEachNode(n *html.Node, pre, post func(n *html.Node)) {
 	}
 	if post != nil {
 		post(n)
+
 	}
 }

@@ -1,10 +1,15 @@
-// Package memo provides a concurrency-unsafe
-// memoization of a function of type Func.
 package memo
 
-// A Memo caches the results of calling a Func
+import (
+	"io/ioutil"
+	"net/http"
+	"sync"
+)
+
+// Memo caches the results of calling a Func.
 type Memo struct {
 	f     Func
+	mu    sync.Mutex
 	cache map[string]result
 }
 
@@ -16,17 +21,28 @@ type result struct {
 	err   error
 }
 
-// New lol
+// New wraper Func to Memo
 func New(f Func) *Memo {
 	return &Memo{f: f, cache: make(map[string]result)}
 }
 
-// Get NOTE: not concurrency-safe!
+// Get memory
 func (m *Memo) Get(key string) (interface{}, error) {
+	m.mu.Lock()
 	res, ok := m.cache[key]
 	if !ok {
 		res.value, res.err = m.f(key)
 		m.cache[key] = res
 	}
+	m.mu.Unlock()
 	return res.value, res.err
+}
+
+func httpGetBody(url string) (interface{}, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return ioutil.ReadAll(resp.Body)
 }

@@ -2,168 +2,80 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"io"
 	"math"
 	"net/http"
-	"strings"
+
+	"./eval"
 )
 
-// Expr is an arithmetic expression
-type Expr interface {
-	// Eval returns the value of this Expr in the environment env
-	Eval(env Env) float64
-	// Check reports errors in this Expr and adds its Vars to the set.
-	Check(vars map[Var]bool) error
+func main() {
+	http.HandleFunc("/plot", plot)
+	http.HandleFunc("/", greet)
+	http.ListenAndServe(":8080", nil)
 }
-
-// Var identifies a variable, e.g., x.
-type Var string
-
-func (v Var) Eval(env Env) float64 {
-	return env[v]
-}
-
-func (v Var) Check(vars map[Var]bool) error {
-	vars[v] = true
-	return nil
-}
-
-// literal is a numeric constant, e.g., 3.141.
-type literal float64
-
-func (l literal) Eval(_ Env) float64 {
-	return float64(l)
-}
-
-func (literal) Check(_ map[Var]bool) error {
-	return nil
-}
-
-// unary represents a unary operator rxpression, e.g., -x.
-type unary struct {
-	op rune // one of '+', '-'
-	x  Expr
-}
-
-func (u unary) Eval(env Env) float64 {
-	switch u.op {
-	case '+':
-		return +u.x.Env(env)
-	case '-':
-		return -u.x.Eval(env)
-	}
-	panic(fmt.Sprintf("unsupported unary operator: %q", u.op))
-}
-
-func (u unary) Check(vars map[Var]bool) error {
-	if !strings.ContainsRune("+-", u.op) {
-		return fmt.Errorf("unexpected unary op %q", u.op)
-	}
-	return u.x.Check(vars)
-}
-
-// binary represents a binary operator expression, e.g., x+y.
-type binary struct {
-	op   rune // one of '+', '-', '*', '/'
-	x, y Expr
-}
-
-func (b binary) Eval(env Env) float64 {
-	switch b.op {
-	case '+':
-		return b.x.Eval(env) + b.y.Eval(env)
-	case '-':
-		return b.x.Eval(env) - b.y.Eval(env)
-	case '*':
-		return b.x.Eval(env) * b.y.Eval(env)
-	case '/':
-		return b.x.Eval(env) / b.y.Eval(env)
-	}
-	panic(fmt.Sprintf("unsupport binary operator: %q", b.op))
-}
-
-func (b binary) Check(vars map[Var]bool) error {
-	if !strings.ContainsRune("+-*/", u.op) {
-		return fmt.Errorf("unexpected unary op %q", b.op)
-	}
-	if err := b.x.Check(vars); err != nil {
-		return err
-	}
-	return b.y.Check(vars)
-}
-
-// call represents a function call expression, e.g., sin(x0.
-type call struct {
-	fn   string // one of "pow", "sin", "sqrt"
-	args []Expr
-}
-
-func (c call) Eval(env Env) float64 {
-	switch c.fn {
-	case "pow":
-		return math.Pow(c.args[0].Eval(env), c.args[1].Eval(env))
-	case "sin":
-		return math.Sin(c.args[0].Eval(env))
-	case "sqrt":
-		return math.Sqrt(c.args[0].Eval(env))
-	}
-	panic(fmt.Sprintf("unsupported function call: %s", c.fn))
-}
-
-func (c call) Check(vars map[Var]bool) error {
-	arity, ok := numParams[c.fn]
-	if !ok {
-		return fmt.Errorf("unknown function %q", c.fn)
-	}
-	if len(c.args) != arity {
-		return fmt.Errorf("call to %s has %d args, want %d",
-			c.fn, len(c.args), arity)
-	}
-	for _, arg := range c.args {
-		if err := arg.Check(vars); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-var numParams = map[string]int{"pow": 2, "sin": 1, "sqrt": 1}
-
-type Env map[Var]float64
-
-func parseAndCheck(s string) (Expr, error) {
-	if s == "" {
-		return nil, fmt.Errorf("empty expression")
-	}
-	expr, err := Parse(s)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	vars := make(map[Var]bool)
-	if err := expr.Check(vars); err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	for v := range vars {
-		if v != "x" && v != "y" && v != "r" {
-			return nil, fmt.Errorf("undefined variable: %s", v)
-		}
-	}
-	return expr, nil
-}
-
 func plot(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	expr, err := parseAndCheck(r.Form.Get("expr"))
+	expr, err := eval.ParseAndCheck(r.Form.Get("expr"))
 	if err != nil {
-		http.Error(w, "bad expr: "+err.Error(), http.StatusBadRequest)
-		return
+		http.Error(w, "bad expression:"+err.Error(), http.StatusBadRequest)
 	}
 	w.Header().Set("Content-Type", "image/svg+xml")
-	surface(w, func(x, y float64) float64 {
-		r := math.Hypot(x, y) //distance from (0,0)
-		return expr.Eval(Env{"x": x, "y": y, "r": r})
-	})
+	fn := func(m, n float64) float64 {
+		distance := math.Hypot(m, n) // distance from (0,0)
+		return expr.Eval(eval.Env{"x": m, "y": n, "r": distance})
+	}
+
+	surface(w, fn)
+}
+
+func greet(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, "Hello World! <hr> %s", form)
+}
+
+var sin30, cos30 = 0.5, math.Sqrt(3.0 / 4.0) // sin(30°), cos(30°)
+const (
+	width, height = 600, 320            // canvas size in pixels
+	cells         = 100                 // number of grid cells
+	xyrange       = 30.0                // x, y axis range (-xyrange..+xyrange)
+	xyscale       = width / 2 / xyrange // pixels per x or y unit
+	zscale        = height * 0.4        // pixels per z unit
+	form          = `
+<form action="/plot" method="post">
+    <label for="expr">Expression:</label>
+    <input type="text" name="expr">
+    <input type="submit" value="submit">
+</form>
+	`
+)
+
+func surface(w io.Writer, f func(float64, float64) float64) {
+	fmt.Fprintf(w, "<svg xmlns='http://www.w3.org/2000/svg' "+
+		"style='stroke: grey; fill: white; stroke-width: 0.7' "+
+		"width='%d' height='%d'>", width, height)
+	for i := 0; i < cells; i++ {
+		for j := 0; j < cells; j++ {
+			ax, ay := corner(f, i+1, j)
+			bx, by := corner(f, i, j)
+			cx, cy := corner(f, i, j+1)
+			dx, dy := corner(f, i+1, j+1)
+			fmt.Fprintf(w, "<polygon points='%g,%g %g,%g %g,%g %g,%g'/>\n",
+				ax, ay, bx, by, cx, cy, dx, dy)
+		}
+	}
+	fmt.Fprintln(w, "</svg>")
+}
+
+func corner(f func(float64, float64) float64, i, j int) (float64, float64) {
+	// find point (x,y) at corner of cell (i,j)
+	x := xyrange * (float64(i)/cells - 0.5)
+	y := xyrange * (float64(j)/cells - 0.5)
+
+	z := f(x, y) // compute surface height z
+
+	// project (x,y,z) isometrically onto 2-D SVG canvas (sx,sy)
+	sx := width/2 + (x-y)*cos30*xyscale
+	sy := height/2 + (x+y)*sin30*xyscale - z*zscale
+	return sx, sy
 }

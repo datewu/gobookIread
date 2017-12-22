@@ -8,13 +8,13 @@ import (
 )
 
 func main() {
-	listener, err := net.Listen("tcp", "localhost:8000")
+	listener, err := net.Listen("tcp", "localhost:8080")
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatalln(err)
 	}
 
 	go broadcaster()
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -23,58 +23,58 @@ func main() {
 		}
 		go handleConn(conn)
 	}
+
 }
 
-type client chan<- string // an outgoning message channel
+type clientStream chan<- string // an outgoing message channel
 
 var (
-	entering = make(chan client)
-	leaving  = make(chan client)
-	messages = make(chan string) // all incoming client messages
+	enteringStream = make(chan clientStream)
+	leavingStream  = make(chan clientStream)
+	messageStream  = make(chan string)
 )
 
 func broadcaster() {
-	clients := make(map[client]bool) // all connected clients
+	clients := make(map[clientStream]bool)
+
 	for {
 		select {
-		case msg := <-messages:
-			// Broadcast incoming message to all
-			// clients' outgoing message channels.
-			for cli := range clients {
-				cli <- msg
+		case msg := <-messageStream:
+			for cliStream := range clients {
+				cliStream <- msg
 			}
-		case cli := <-entering:
-			clients[cli] = true
-		case cli := <-leaving:
-			delete(clients, cli)
-			close(cli)
+		case cliStream := <-enteringStream:
+			clients[cliStream] = true
+		case cliStream := <-leavingStream:
+			delete(clients, cliStream)
+			close(cliStream)
 		}
 	}
 }
 
 func handleConn(conn net.Conn) {
-	ch := make(chan string) // outgoing client messagese
-	go clientWriter(conn, ch)
+	cliStream := make(chan string)
+	go clientWrite(conn, cliStream)
 
 	who := conn.RemoteAddr().String()
-	ch <- "You are " + who
-	messages <- who + " has arrived"
-	entering <- ch
+	cliStream <- "Your ID is: " + who
 
-	input := bufio.NewScanner(conn)
-	for input.Scan() {
-		messages <- who + ": " + input.Text()
+	messageStream <- "Hi everyone, " + who + " has arrived"
+	enteringStream <- cliStream
+
+	cliInput := bufio.NewScanner(conn)
+	for cliInput.Scan() {
+		messageStream <- who + ": " + cliInput.Text()
 	}
-	// NOTE: ignoring potential errors from input.Err()
+	// NOTE: ignoring potential errors from cliInput.Err()
 
-	leaving <- ch
-	messages <- who + " has left"
+	leavingStream <- cliStream
+	messageStream <- who + " has just left!"
 	conn.Close()
 }
 
-func clientWriter(conn net.Conn, ch <-chan string) {
+func clientWrite(conn net.Conn, ch <-chan string) {
 	for msg := range ch {
-		fmt.Fprintln(conn, msg) // NOTE: ignoring network errors
+		fmt.Fprintln(conn, msg)
 	}
-
 }

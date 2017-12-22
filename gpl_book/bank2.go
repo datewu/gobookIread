@@ -1,25 +1,31 @@
 package main
 
-import "fmt"
-
-func main() {
-	fmt.Println("vim-go")
-}
-
-var (
-	sema    = make(chan struct{}, 1) // a binary semaphore guarding balance
-	balance int
+import (
+	"fmt"
 )
 
-func Deposit(amonut int) {
-	sema <- struct{}{} // acquire token
-	balance += amonut
-	<-sema // relaese token
+var (
+	sema = make(chan struct{}, 1)
+	b    int
+)
+
+func deposit(amount int) {
+	sema <- struct{}{}
+	b += amount
+	<-sema
 }
 
-func Balance() int {
-	sema <- struct{}{} // acquire token
-	b := balance
-	<-sema // relaese token
-	return b
+func balance() int {
+	sema <- struct{}{}
+	r := b
+	<-sema
+	return r
+
+}
+
+func main() {
+
+	fmt.Println(balance())
+	deposit(100)
+	fmt.Println("After deposit 100:", balance())
 }

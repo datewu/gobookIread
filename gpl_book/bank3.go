@@ -5,24 +5,27 @@ import (
 	"sync"
 )
 
-func main() {
-	fmt.Println("vim-go")
-}
-
 var (
-	mu      sync.Mutex // guards balance
-	balance int
+	mu sync.Mutex
+	b  int
 )
 
-func Deposit(amount int) {
+func deposit(amount int) {
 	mu.Lock()
-	balance += amount
+	b += amount
 	mu.Unlock()
 }
 
-func Balance() int {
+func balance() int {
 	mu.Lock()
-	b := balance
-	mu.Unlock()
+	defer mu.Unlock()
 	return b
+
+}
+
+func main() {
+
+	fmt.Println(balance())
+	deposit(100)
+	fmt.Println("After deposit 100:", balance())
 }

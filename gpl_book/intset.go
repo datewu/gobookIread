@@ -6,11 +6,21 @@ import (
 )
 
 func main() {
-	fmt.Println("vim-go")
+	setNew := new(IntSet)
+	data := []int{2, 2, 3, 3, 312, 35, 67, 97, 10, 25}
+	seedSet(setNew, data)
+	fmt.Println(setNew, setNew.Has(13))
+	fmt.Println(setNew.Has(25), setNew.Has(13))
 }
 
-// An IntSet is a set of small non-negative integers.
-// Its zero valuerepresents the empty set.
+func seedSet(s *IntSet, d []int) {
+	for _, v := range d {
+		s.Add(v)
+	}
+}
+
+// IntSet is a set of small non-negative integers.
+// Its zero calue represents the empty set.
 type IntSet struct {
 	words []uint64
 }
@@ -23,7 +33,13 @@ func (s *IntSet) Has(x int) bool {
 
 // Add adds the non-negative value x to the set.
 func (s *IntSet) Add(x int) {
+	// if s.Has(x) {
+	// 	return
+	// }
 	word, bit := x/64, uint(x%64)
+	if word < len(s.words) && s.words[word]&(1<<bit) != 0 {
+		return
+	}
 	for word >= len(s.words) {
 		s.words = append(s.words, 0)
 	}
@@ -41,7 +57,7 @@ func (s *IntSet) UnionWith(t *IntSet) {
 	}
 }
 
-// String returns the set as a string of the form "{1 2 3}".
+// String return the set  as a string of the form "{ 1 5 9 }".
 func (s *IntSet) String() string {
 	var buf bytes.Buffer
 	buf.WriteByte('{')

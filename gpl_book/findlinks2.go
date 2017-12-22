@@ -22,12 +22,9 @@ func main() {
 	}
 }
 
-// findLinks performs an HTTP GET request for url, parses the
-// response as HTML, and extracts and returns the links.
 func findLinks(url string) ([]string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -36,8 +33,7 @@ func findLinks(url string) ([]string, error) {
 	}
 	doc, err := html.Parse(resp.Body)
 	if err != nil {
-		log.Println(err)
-		return nil, fmt.Errorf("parsing %s as HTML: %v", url, err)
+		return nil, fmt.Errorf("parsing %s as HTML %v", url, err)
 	}
 	return visit(nil, doc), nil
 }

@@ -7,8 +7,9 @@ import (
 )
 
 func main() {
-	db := database{"shoes": 99, "sock": 98}
-	log.Fatalln(http.ListenAndServe(":8080", db))
+	db := database{"shoes": 98, "sock": 13}
+	log.Fatalln(http.ListenAndServe(":9090", db))
+
 }
 
 type dollars float32
@@ -19,8 +20,8 @@ func (d dollars) String() string {
 
 type database map[string]dollars
 
-func (db database) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	for item, price := range db {
+func (d database) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	for item, price := range d {
 		fmt.Fprintf(w, "%s: %s\n", item, price)
 	}
 }

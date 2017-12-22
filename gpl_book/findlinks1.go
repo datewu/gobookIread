@@ -11,8 +11,7 @@ import (
 func main() {
 	doc, err := html.Parse(os.Stdin)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatalln(err)
 	}
 	for _, link := range visit(nil, doc) {
 		fmt.Println(link)

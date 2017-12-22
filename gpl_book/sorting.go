@@ -2,24 +2,21 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"text/tabwriter"
 	"time"
 )
 
-// Track lol
+// Track tracks recoders
 type Track struct {
-	Title  string
-	Artist string
-	Album  string
-	Year   int
-	Length time.Duration
+	Title, Artist, Album string
+	Year                 int
+	Length               time.Duration
 }
 
 var tracks = []*Track{
-	{"Go", "Delilah", "From the Roots Up", 2012, length("3m38s")},
+	{"Go", "Delilah", " From the Roots up", 2012, length("3m38s")},
 	{"Go", "Moby", "Moby", 1992, length("3m37s")},
 	{"Go Ahead", "Alicia Keys", "As I Am", 2007, length("4m36s")},
 	{"Ready 2 Go", "Martin Solveig", "Smash", 2011, length("4m24s")},
@@ -28,7 +25,6 @@ var tracks = []*Track{
 func length(s string) time.Duration {
 	d, err := time.ParseDuration(s)
 	if err != nil {
-		log.Println(err)
 		panic(s)
 	}
 	return d
@@ -36,54 +32,60 @@ func length(s string) time.Duration {
 
 type byArtist []*Track
 
-func (x byArtist) Len() int {
-	return len(x)
+func (artists byArtist) Len() int {
+	return len(artists)
 }
 
-func (x byArtist) Less(i, j int) bool {
-	return x[i].Artist < x[j].Artist
+func (artists byArtist) Less(i, j int) bool {
+	return artists[i].Artist < artists[j].Artist
 }
 
-func (x byArtist) Swap(i, j int) {
-	x[i], x[j] = x[j], x[i]
+func (artists byArtist) Swap(i, j int) {
+	artists[i], artists[j] = artists[j], artists[i]
 }
 
 func main() {
 	fmt.Println("ORIGIN TRACKS")
 	printTracks(tracks)
-	fmt.Println("SORT by ARTIST")
-	sort.Sort(byArtist(tracks))
-	printTracks(tracks)
-	sort.Sort(sort.Reverse(byArtist(tracks)))
-	fmt.Println("REVERSE SORT")
-	printTracks(tracks)
-	fmt.Println("CUSTOM SORT")
 
-	sort.Sort(customSort{tracks, func(x, y *Track) bool {
-		if x.Title != y.Title {
-			return x.Title < y.Title
+	sort.Sort(byArtist(tracks))
+	fmt.Println("Sorted by Artist")
+	printTracks(tracks)
+
+	sort.Sort(sort.Reverse(byArtist(tracks)))
+	fmt.Println("Reverse Sorted by Artist")
+	printTracks(tracks)
+
+	fmt.Println("Custom Sort")
+	customFunc := func(a, b *Track) bool {
+		if a.Title != b.Title {
+			return a.Title < b.Title
 		}
-		if x.Year != y.Year {
-			return x.Year < y.Year
+		if a.Year != b.Year {
+			return a.Year < b.Year
 		}
-		if x.Length != y.Length {
-			return x.Length < y.Length
+		if a.Length != b.Length {
+			return a.Length < b.Length
 		}
 		return false
-	}})
-
+	}
+	custom := customSort{
+		tracks,
+		customFunc,
+	}
+	sort.Sort(custom)
 	printTracks(tracks)
 }
 
-func printTracks(tracks []*Track) {
+func printTracks(ts []*Track) {
 	const format = "%v\t%v\t%v\t%v\t%v\t\n"
 	tw := new(tabwriter.Writer).Init(os.Stdout, 0, 8, 2, ' ', 0)
-	fmt.Fprintf(tw, format, "Title", "Artist", "Album", "Year", "length")
-	fmt.Fprintf(tw, format, "-----", "-----", "-----", "-----", "-----")
+	fmt.Fprintf(tw, format, "Title", "Artist", "Album", "Year", "Length")
+	fmt.Fprintf(tw, format, "----", "----", "----", "----", "----")
 	for _, t := range tracks {
 		fmt.Fprintf(tw, format, t.Title, t.Artist, t.Album, t.Year, t.Length)
 	}
-	tw.Flush() // calculate column widths and print table
+	tw.Flush()
 }
 
 type customSort struct {
@@ -91,14 +93,14 @@ type customSort struct {
 	less func(x, y *Track) bool
 }
 
-func (x customSort) Len() int {
-	return len(x.t)
+func (c customSort) Len() int {
+	return len(c.t)
 }
 
-func (x customSort) Less(i, j int) bool {
-	return x.less(x.t[i], x.t[j])
+func (c customSort) Less(i, j int) bool {
+	return c.less(c.t[i], c.t[j])
 }
 
-func (x customSort) Swap(i, j int) {
-	x.t[i], x.t[j] = x.t[j], x.t[i]
+func (c customSort) Swap(i, j int) {
+	c.t[i], c.t[j] = c.t[j], c.t[i]
 }
