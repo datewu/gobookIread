@@ -1,0 +1,26 @@
+logDefer 2019/11/08 10:48:20 Hello there
+logDefer 2019/11/08 10:48:20 Another log entry
+logDefer 2019/11/08 10:48:20 -- FUNCTION one ----
+logDefer 2019/11/08 10:48:20 0
+logDefer 2019/11/08 10:48:20 1
+logDefer 2019/11/08 10:48:20 2
+logDefer 2019/11/08 10:48:20 3
+logDefer 2019/11/08 10:48:20 4
+logDefer 2019/11/08 10:48:20 5
+logDefer 2019/11/08 10:48:20 6
+logDefer 2019/11/08 10:48:20 7
+logDefer 2019/11/08 10:48:20 8
+logDefer 2019/11/08 10:48:20 9
+logDefer 2019/11/08 10:48:20 FUNCTION one ----
+logDefer 2019/11/08 10:48:20 ------ FUNCTION two
+logDefer 2019/11/08 10:48:20 0
+logDefer 2019/11/08 10:48:20 1
+logDefer 2019/11/08 10:48:20 2
+logDefer 2019/11/08 10:48:20 3
+logDefer 2019/11/08 10:48:20 4
+logDefer 2019/11/08 10:48:20 5
+logDefer 2019/11/08 10:48:20 6
+logDefer 2019/11/08 10:48:20 7
+logDefer 2019/11/08 10:48:20 8
+logDefer 2019/11/08 10:48:20 9
+logDefer 2019/11/08 10:48:20 FUNCTION two ------
